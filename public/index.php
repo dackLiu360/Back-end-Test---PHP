@@ -3,7 +3,7 @@
 require "../config.php";
 require '../vendor/autoload.php';
 
-use App\Providers\ApiServiceProvider;
+use App\Providers\RouteServiceProvider;
 
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
@@ -15,5 +15,5 @@ $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $uri = explode('/', $uri);
 $param = empty($uri[3]) ? false : $uri[3];
 
-$controller = new ApiServiceProvider($dbConnection);
+$controller = new RouteServiceProvider($dbConnection);
 echo $controller->validateActions($uri[2], $param);

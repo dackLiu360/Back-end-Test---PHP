@@ -6,7 +6,7 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\CitiesController;
 use App\Http\Controllers\StatesController;
 
-class ApiServiceProvider
+class RouteServiceProvider
 {
     private $usersController;
     private $addressesController;
