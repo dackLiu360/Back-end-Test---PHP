@@ -4,7 +4,6 @@ namespace App\Models;
 
 class States
 {
-
     private $db;
 
     public function __construct($db)

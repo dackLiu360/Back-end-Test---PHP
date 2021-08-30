@@ -43,7 +43,7 @@ FLUSH PRIVILEGES;
 | http://127.0.0.1:8000/api/findCityById/1                  | Encontra uma cidade registrada pelo id passado.      |
 | http://127.0.0.1:8000/api/findAllStates                   | Encontra todos os estados registrados sem repetições.        |
 | http://127.0.0.1:8000/api/findStateById/1                 | Encontra um estado registrado pelo id passado. |
-| http://127.0.0.1:8000/api/findUsersTotalByCity/São%Paulo  | Encontra a quantidade de usuários registrados no sistema por uma cidade passada.      |
+| http://127.0.0.1:8000/api/findUsersTotalByCity/São%20Paulo  | Encontra a quantidade de usuários registrados no sistema por uma cidade passada.      |
 | http://127.0.0.1:8000/api/findUsersTotalByState/SP        | Encontra a quantidade de usuários registrados no sistema por um estado passada.     |
 | http://127.0.0.1:8000/api/deleteUser/1                    | Deleta um usuário e todas as suas informações vinculadas por um id passado. |
 

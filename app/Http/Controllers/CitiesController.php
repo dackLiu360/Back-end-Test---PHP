@@ -1,37 +1,22 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Exception;
 use InvalidArgumentException;
-use App\Models\Cities;
 
-class CitiesController {
-
-   
-    const ID = 'id';
-    const CITY = 'city';
-    const ERROR_NOT_FOUND_ID = 'No city was found by the given id!';
-    const ERROR_NOT_FOUND = 'No city was found!';
-    const TOTAL_CITIES = 'The total of users registered by the given city found was: ';
-    
-    private $cities;
-
-
-    public function __construct($db)
-    {
-        $this->cities = new Cities($db);
-    }
-
+class CitiesController extends MethodsDefaultController
+{
     /**
      * Get the city by the given id
      */
     public function read($id)
     {
         try {
-            if (!$city = $this->cities->findById($id)) {
-                throw new InvalidArgumentException(self::ERROR_NOT_FOUND_ID);
+            if (!$city = $this->getCityById($id)) {
+                throw new InvalidArgumentException(self::ERROR_NOT_FOUND_USER_ID);
             }
-            
+
             $data['city'] = $city['city'];
         } catch (Exception $e) {
             header('HTTP/1.1 500 Invalid Data');
@@ -47,8 +32,8 @@ class CitiesController {
     public function readAll()
     {
         try {
-            if (empty($data = $this->cities->findAll())) {
-                throw new InvalidArgumentException(self::ERROR_NOT_FOUND);
+            if (empty($data = $this->getCitiesName())) {
+                throw new InvalidArgumentException(self::ERROR_NOT_FOUND_USER);
             }
         } catch (Exception $e) {
             header('HTTP/1.1 500 Invalid Data');
@@ -65,8 +50,7 @@ class CitiesController {
     {
         try {
             $name = urldecode($name);
-            $name = str_replace('%', ' ', $name);
-            $data = $this->cities->findByName($name);
+            $data = $this->getTotalUsersByCity($name);
         } catch (Exception $e) {
             header('HTTP/1.1 500 Invalid Data');
             return json_encode($e->getMessage());

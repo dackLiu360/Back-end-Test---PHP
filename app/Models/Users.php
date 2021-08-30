@@ -2,10 +2,8 @@
 
 namespace App\Models;
 
-
 class Users
 {
-
     private $db;
 
     public function __construct($db)
@@ -96,46 +94,42 @@ class Users
         }    
     }
 
-    public function update($id, $data)
+    public function updateUsername($id, $data)
     {
         $statement = "
             UPDATE users
             SET 
+            username = :username
+            where id = :id
         ";
 
-        $params = [];
+        try {
+            $statement = $this->db->prepare($statement);
+            $statement->execute(
+                ['username' => $data['username'], 'id' => $id]
+            );
+            return $statement->rowCount();
+        } catch (\PDOException $e) {
+            exit($e->getMessage());
+        }    
+    }
 
+    public function updatePassword($id, $data){
+        $statement = "
+        UPDATE users
+        SET 
+        password = :password
+        where id = :id
+    ";
         $options = [
             'cost' => 12,
         ];
 
-        if(empty($data['username']) && empty($data['password'])){
-            return true;
-        }
-
-        if (!empty($data['username'])){
-            $statement .= ' username = :username';
-        }
-        
-        if (!empty($data['password'])){
-            $statement .= ' password = :password';
-        }
-
-        $statement .= ' where id = :id';
-        $params['id'] = $id;
-
         try {
             $statement = $this->db->prepare($statement);
-            if(!empty($data['username'])){
-                $statement->execute(
-                    ['username' => $data['username'], 'id' => $id]
-                );
-            } else{
-                $statement->execute(
-                    ['password' => password_hash($data['password'], PASSWORD_BCRYPT, $options), 'id' => $id]
-                );
-            }
-  
+            $statement->execute(
+                ['password' => password_hash($data['password'], PASSWORD_BCRYPT, $options), 'id' => $id]
+            );
             return $statement->rowCount();
         } catch (\PDOException $e) {
             exit($e->getMessage());

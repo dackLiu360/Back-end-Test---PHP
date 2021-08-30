@@ -1,36 +1,22 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Exception;
 use InvalidArgumentException;
-use App\Models\States;
 
-class StatesController {
-
-    const ID = 'id';
-    const STATE = 'state';
-    const ERROR_NOT_FOUND_ID = 'No state was found by the given id!';
-    const ERROR_NOT_FOUND = 'No state was found!';
-    const TOTAL_STATES = 'The total of users registered by the given state found was: ';
-    
-    private $states;
-
-
-    public function __construct($db)
-    {
-        $this->states = new States($db);
-    }
-
+class StatesController extends MethodsDefaultController
+{
     /**
      * Get the state by the given id
      */
     public function read($id)
     {
         try {
-            if (!$state = $this->states->findById($id)) {
-                throw new InvalidArgumentException(self::ERROR_NOT_FOUND_ID);
+            if (!$state = $this->getStateById($id)) {
+                throw new InvalidArgumentException(self::ERROR_NOT_FOUND_STATE_ID);
             }
-            
+
             $data['state'] = $state['state'];
         } catch (Exception $e) {
             header('HTTP/1.1 500 Invalid Data');
@@ -46,8 +32,8 @@ class StatesController {
     public function readAll()
     {
         try {
-            if (empty($data = $this->states->findAll())) {
-                throw new InvalidArgumentException(self::ERROR_NOT_FOUND);
+            if (empty($data = $this->getStatesName())) {
+                throw new InvalidArgumentException(self::ERROR_NOT_FOUND_STATE);
             }
         } catch (Exception $e) {
             header('HTTP/1.1 500 Invalid Data');
@@ -64,7 +50,7 @@ class StatesController {
     {
         try {
             $name = urldecode($name);
-            $data = $this->states->findByName($name);
+            $data = $this->getTotalUsersByState($name);
         } catch (Exception $e) {
             header('HTTP/1.1 500 Invalid Data');
             return json_encode($e->getMessage());

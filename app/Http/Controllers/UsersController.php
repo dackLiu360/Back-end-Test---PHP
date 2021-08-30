@@ -4,70 +4,28 @@ namespace App\Http\Controllers;
 
 use Exception;
 use InvalidArgumentException;
-use App\Models\Addresses;
-use App\Models\Cities;
-use App\Models\States;
-use App\Models\Users;
-
-class UsersController
+class UsersController extends MethodsDefaultController
 {
-
-    const USERNAME = 'username';
-    const PASSWORD = 'password';
-    const ADDRESS = 'address';
-    const CITY = 'city';
-    const STATE = 'state';
-    const FK_USER = 'fk_user';
-    const ID = 'id';
-    const ERROR_FILLED = 'All the fields must be filled before submit a new user!';
-    const ERROR_FILLED_NONE = 'At least one field must be filled !';
-    const ERROR_ALREADY_EXISTS = 'Username already exists, please chose another!';
-    const ERROR_NOT_FOUND = 'No user was found!';
-    const ERROR_NOT_FOUND_ID = 'No user was found by the given id!';
-    const SUCCESS_CREATE = 'User was succesfully created!';
-    const SUCCESS_DELETE = 'User was succesfully deleted!';
-    const SUCCESS_UPDATE = 'User was succesfully updated!';
-    const HIDE_PASSWORD = '******';
-
-    private $users;
-    private $addresses;
-    private $cities;
-    private $states;
-
-
-    public function __construct($db)
-    {
-        $this->users = new Users($db);
-        $this->addresses = new Addresses($db);
-        $this->cities = new Cities($db);
-        $this->states = new States($db);
-    }
-
     /**
      * Registers an user data 
      */
     public function create()
     {
+        $request = $_POST;
+
         try {
-
-            $request = $_POST;
-
             if (
-                empty($request['username']) || empty($request['password']) || empty(['request->address']) ||
+                empty($request['username']) || empty($request['password']) || empty($request['address']) ||
                 empty($request['city']) ||  empty($request['state'])
             ) {
                 throw new InvalidArgumentException(self::ERROR_FILLED);
             }
 
-            if($this->users->findByUsername($request['username'])){
+            if($this->getUserByUsername($request['username'])){
                 throw new InvalidArgumentException(self::ERROR_ALREADY_EXISTS);
             }
 
-            $id = $this->users->insert(['username' => $request['username'], 'password' => $request['password']]);
-            $this->addresses->insert($id, ['address' => $request['address']]);
-            $this->cities->insert($id, ['city' => $request['city']]);
-            $this->states->insert($id, ['state' => $request['state']]);
-
+            $this->insertUser($request['username'], $request['password'], $request['address'], $request['city'], $request['state']);
             
         } catch (Exception $e) {
             header('HTTP/1.1 500 Invalid Data');
@@ -83,8 +41,8 @@ class UsersController
     public function read($id)
     {
         try {
-            if (!$user = $this->users->findById($id)) {
-                throw new InvalidArgumentException(self::ERROR_NOT_FOUND_ID);
+            if (!$user = $this->getUserById($id)) {
+                throw new InvalidArgumentException(self::ERROR_NOT_FOUND_USER_ID);
             }
             
             $data['username'] = $user['username'];
@@ -103,10 +61,10 @@ class UsersController
     public function readAll()
     {
         try {
-            $users = $this->users->findAll();
+            $users = $this->getUsersIdUsername();
 
             if (empty($users)) {
-                throw new InvalidArgumentException(self::ERROR_NOT_FOUND);
+                throw new InvalidArgumentException(self::ERROR_NOT_FOUND_USER);
             }
 
             $data = [];
@@ -114,9 +72,9 @@ class UsersController
             foreach ($users as $k => $user) {
                 $data[$k][self::USERNAME] = $user['username'];
                 $data[$k][self::PASSWORD] = self::HIDE_PASSWORD;
-                $data[$k][self::ADDRESS] = $this->addresses->findByFkUser($user['id']);
-                $data[$k][self::CITY] = $this->cities->findByFkUser($user['id']);
-                $data[$k][self::STATE] = $this->states->findByFkUser($user['id']);
+                $data[$k][self::ADDRESS] = $this->getAddressByUserId($user['id']);
+                $data[$k][self::CITY] = $this->getCityByUserId($user['id']);
+                $data[$k][self::STATE] = $this->getStateByUserId($user['id']);
             }
         } catch (Exception $e) {
             header('HTTP/1.1 500 Invalid Data');
@@ -134,36 +92,45 @@ class UsersController
         $request = $_POST;
 
         try {
-            if (!$user = $this->users->findById($id)) {
-                throw new InvalidArgumentException(self::ERROR_NOT_FOUND_ID);
+            if (!$this->getUserById($id)) {
+                throw new InvalidArgumentException(self::ERROR_NOT_FOUND_USER_ID);
             }
 
+            $params = [
+                'username' => empty($request['username']) ? false : $request['username'],
+                'password' => empty($request['password']) ? false : $request['password'],
+                'address' => empty($request['address']) ? false : $request['address'],
+                'city' => empty($request['city']) ? false : $request['city'],
+                'state' => empty($request['state']) ? false : $request['state'],
+            ];
+
             if (
-                empty($request['username']) && empty($request['password']) && empty($request['address']) &&
-                empty($request['city']) && empty($request['state'])
+                !$params['username'] && !$params['password'] && !$params['address'] &&
+                !$params['city'] && !$params['state']
             ) {
                 throw new InvalidArgumentException(self::ERROR_FILLED_NONE);
             }
 
+
             if (isset($request['username'])) {
-                $this->users->update($id, ['username' => $request['username']]);
+                $this->updateFields($id, ['username' => $request['username']]);
             }
 
             if (isset($request['password'])) {
-                $this->users->update($id, ['password' => $request['password']]);
+                $this->updateFields($id, ['password' => $request['password']]);
             }
 
 
             if (isset($request['address'])) {
-                $this->addresses->update($id, ['address' => $request['address']]);
+                $this->updateFields($id, ['address' => $request['address']]);
             }
 
             if (isset($request['city'])) {
-                $this->cities->update($id, ['city' => $request['city']]);
+                $this->updateFields($id, ['city' => $request['city']]);
             }
 
             if (isset($request['state'])) {
-                $this->states->update($id, ['state' => $request['state']]);
+                $this->updateFields($id, ['state' => $request['state']]);
             }
         } catch (Exception $e) {
             header('HTTP/1.1 500 Invalid Data');
@@ -179,8 +146,8 @@ class UsersController
     public function delete($id)
     {
         try {
-            if (empty($this->users->delete($id))) {
-                throw new InvalidArgumentException(self::ERROR_NOT_FOUND_ID);
+            if (empty($this->deleteUserInfo($id))) {
+                throw new InvalidArgumentException(self::ERROR_NOT_FOUND_USER_ID);
             }
         } catch (Exception $e) {
             header('HTTP/1.1 500 Invalid Input');
