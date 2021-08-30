@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use Exception;
 use InvalidArgumentException;
+use App\Models\Cities;
 
 class CitiesController {
 
@@ -12,6 +13,14 @@ class CitiesController {
     const ERROR_NOT_FOUND_ID = 'No city was found by the given id!';
     const ERROR_NOT_FOUND = 'No city was found!';
     const TOTAL_CITIES = 'The total of users registered by the given city found was: ';
+    
+    private $cities;
+
+
+    public function __construct($db)
+    {
+        $this->cities = new Cities($db);
+    }
 
     /**
      * Get the city by the given id
@@ -19,14 +28,17 @@ class CitiesController {
     public function read($id)
     {
         try {
-            if(empty($data = Cities::select(self::CITY)->where(self::ID, $request->id)->first())){
+            if (!$city = $this->cities->findById($id)) {
                 throw new InvalidArgumentException(self::ERROR_NOT_FOUND_ID);
             }
+            
+            $data['city'] = $city['city'];
         } catch (Exception $e) {
-            return response()->json($e->getMessage(), 500);
+            header('HTTP/1.1 500 Invalid Data');
+            return json_encode($e->getMessage());
         }
 
-        return response()->json($data);
+        return json_encode($data);
     }
 
     /**
@@ -35,14 +47,15 @@ class CitiesController {
     public function readAll()
     {
         try {
-            if(empty($data = response()->json(Cities::select(self::CITY)->distinct()->get()))){
+            if (empty($data = $this->cities->findAll())) {
                 throw new InvalidArgumentException(self::ERROR_NOT_FOUND);
             }
         } catch (Exception $e) {
-            return response()->json($e->getMessage(), 500);
+            header('HTTP/1.1 500 Invalid Data');
+            return json_encode($e->getMessage());
         }
 
-        return $data;
+        return json_encode($data);
     }
 
     /**
@@ -51,11 +64,13 @@ class CitiesController {
     public function readUsersTotalByCity($name)
     {
         try {
-            $data = Cities::where(self::CITY, $request->city)->count();
+            $name = urldecode($name);
+            $data = $this->cities->findByName($name);
         } catch (Exception $e) {
-            return response()->json($e->getMessage(), 500);
+            header('HTTP/1.1 500 Invalid Data');
+            return json_encode($e->getMessage());
         }
 
-        return response()->json(self::TOTAL_CITIES . $data);
+        return json_encode(self::TOTAL_CITIES . $data['total']);
     }
 }

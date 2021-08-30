@@ -17,9 +17,9 @@ class Users
     {
         $statement = "
             SELECT 
-                id, firstname, lastname, firstparent_id, secondparent_id
+                id, username
             FROM
-                person;
+                users;
         ";
 
         try {
@@ -35,16 +35,16 @@ class Users
     {
         $statement = "
             SELECT 
-                id, firstname, lastname, firstparent_id, secondparent_id
+                username
             FROM
-                person
+                users
             WHERE id = ?;
         ";
 
         try {
             $statement = $this->db->prepare($statement);
-            $statement->execute(array($id));
-            $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
+            $statement->execute([$id]);
+            $result = $statement->fetch(\PDO::FETCH_ASSOC);
             return $result;
         } catch (\PDOException $e) {
             exit($e->getMessage());
@@ -63,7 +63,7 @@ class Users
 
         try {
             $statement = $this->db->prepare($statement);
-            $statement->execute(array($username));
+            $statement->execute([$username]);
             $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
             return $result;
         } catch (\PDOException $e) {
@@ -71,50 +71,71 @@ class Users
         }    
     }
 
-    public function insert(Array $input)
+    public function insert($data)
     {
         $statement = "
-            INSERT INTO person 
-                (firstname, lastname, firstparent_id, secondparent_id)
+            INSERT INTO users 
+                (username, password)
             VALUES
-                (:firstname, :lastname, :firstparent_id, :secondparent_id);
+                (:username, :password);
         ";
+
+        $options = [
+            'cost' => 12,
+        ];
 
         try {
             $statement = $this->db->prepare($statement);
-            $statement->execute(array(
-                'firstname' => $input['firstname'],
-                'lastname'  => $input['lastname'],
-                'firstparent_id' => $input['firstparent_id'] ?? null,
-                'secondparent_id' => $input['secondparent_id'] ?? null,
-            ));
-            return $statement->rowCount();
+            $statement->execute([
+                'username' => $data['username'],
+                'password'  => password_hash($data['password'], PASSWORD_BCRYPT, $options)
+            ]);
+            return $this->db->lastInsertId();
         } catch (\PDOException $e) {
             exit($e->getMessage());
         }    
     }
 
-    public function update($id, Array $input)
+    public function update($id, $data)
     {
         $statement = "
-            UPDATE person
+            UPDATE users
             SET 
-                firstname = :firstname,
-                lastname  = :lastname,
-                firstparent_id = :firstparent_id,
-                secondparent_id = :secondparent_id
-            WHERE id = :id;
         ";
+
+        $params = [];
+
+        $options = [
+            'cost' => 12,
+        ];
+
+        if(empty($data['username']) && empty($data['password'])){
+            return true;
+        }
+
+        if (!empty($data['username'])){
+            $statement .= ' username = :username';
+        }
+        
+        if (!empty($data['password'])){
+            $statement .= ' password = :password';
+        }
+
+        $statement .= ' where id = :id';
+        $params['id'] = $id;
 
         try {
             $statement = $this->db->prepare($statement);
-            $statement->execute(array(
-                'id' => (int) $id,
-                'firstname' => $input['firstname'],
-                'lastname'  => $input['lastname'],
-                'firstparent_id' => $input['firstparent_id'] ?? null,
-                'secondparent_id' => $input['secondparent_id'] ?? null,
-            ));
+            if(!empty($data['username'])){
+                $statement->execute(
+                    ['username' => $data['username'], 'id' => $id]
+                );
+            } else{
+                $statement->execute(
+                    ['password' => password_hash($data['password'], PASSWORD_BCRYPT, $options), 'id' => $id]
+                );
+            }
+  
             return $statement->rowCount();
         } catch (\PDOException $e) {
             exit($e->getMessage());
@@ -124,7 +145,7 @@ class Users
     public function delete($id)
     {
         $statement = "
-            DELETE FROM person
+            DELETE FROM users
             WHERE id = :id;
         ";
 

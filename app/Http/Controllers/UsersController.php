@@ -29,17 +29,15 @@ class UsersController
     const SUCCESS_UPDATE = 'User was succesfully updated!';
     const HIDE_PASSWORD = '******';
 
-    private $db;
     private $users;
     private $addresses;
     private $cities;
     private $states;
 
 
-    public function __construct($db, $requestMethod, $userId)
+    public function __construct($db)
     {
-        $this->db = $db;
-        $this->user = new Users($db);
+        $this->users = new Users($db);
         $this->addresses = new Addresses($db);
         $this->cities = new Cities($db);
         $this->states = new States($db);
@@ -61,12 +59,22 @@ class UsersController
                 throw new InvalidArgumentException(self::ERROR_FILLED);
             }
 
+            if($this->users->findByUsername($request['username'])){
+                throw new InvalidArgumentException(self::ERROR_ALREADY_EXISTS);
+            }
+
+            $id = $this->users->insert(['username' => $request['username'], 'password' => $request['password']]);
+            $this->addresses->insert($id, ['address' => $request['address']]);
+            $this->cities->insert($id, ['city' => $request['city']]);
+            $this->states->insert($id, ['state' => $request['state']]);
+
             
         } catch (Exception $e) {
-            return true;
+            header('HTTP/1.1 500 Invalid Data');
+            return json_encode($e->getMessage());
         }
 
-        return response()->json(self::SUCCESS_CREATE);
+        return json_encode(self::SUCCESS_CREATE);
     }
 
     /**
@@ -75,15 +83,18 @@ class UsersController
     public function read($id)
     {
         try {
-            if (empty($data = Users::select('username')->where(self::ID, $request->id)->first())) {
+            if (!$user = $this->users->findById($id)) {
                 throw new InvalidArgumentException(self::ERROR_NOT_FOUND_ID);
             }
+            
+            $data['username'] = $user['username'];
             $data['password'] = self::HIDE_PASSWORD;
         } catch (Exception $e) {
-            return true;
+            header('HTTP/1.1 500 Invalid Data');
+            return json_encode($e->getMessage());
         }
 
-        return response()->json($data);
+        return json_encode($data);
     }
 
     /**
@@ -92,98 +103,90 @@ class UsersController
     public function readAll()
     {
         try {
-            $users = Users::get(['id', 'username']);
+            $users = $this->users->findAll();
 
-            if (empty(response()->json($users))) {
+            if (empty($users)) {
                 throw new InvalidArgumentException(self::ERROR_NOT_FOUND);
             }
 
             $data = [];
 
             foreach ($users as $k => $user) {
-                $data[$k][self::USERNAME] = $user->username;
+                $data[$k][self::USERNAME] = $user['username'];
                 $data[$k][self::PASSWORD] = self::HIDE_PASSWORD;
-                $data[$k][self::ADDRESS] = Addresses::select(self::ADDRESS)
-                    ->where(self::FK_USER, $user->id)
-                    ->first()
-                    ->address;
-                $data[$k][self::CITY] = Cities::select(self::CITY)
-                    ->where(self::FK_USER, $user->id)
-                    ->first()
-                    ->city;
-                $data[$k][self::STATE] = States::select(self::STATE)
-                    ->where(self::FK_USER, $user->id)
-                    ->first()
-                    ->state;
+                $data[$k][self::ADDRESS] = $this->addresses->findByFkUser($user['id']);
+                $data[$k][self::CITY] = $this->cities->findByFkUser($user['id']);
+                $data[$k][self::STATE] = $this->states->findByFkUser($user['id']);
             }
         } catch (Exception $e) {
-            return true;
+            header('HTTP/1.1 500 Invalid Data');
+            return json_encode($e->getMessage());
         }
 
-        return response()->json($data);
+        return json_encode($data);
     }
 
     /**
      * Updates an user info by the given id
      */
-    public function update($params, $id)
+    public function update($id)
     {
+        $request = $_POST;
+
         try {
-            if (empty(Users::where(self::ID, $request->id)->first())) {
+            if (!$user = $this->users->findById($id)) {
                 throw new InvalidArgumentException(self::ERROR_NOT_FOUND_ID);
             }
 
             if (
-                empty($request->username) && empty($request->password) && empty($request->address) &&
-                empty($request->city) && empty($request->state)
+                empty($request['username']) && empty($request['password']) && empty($request['address']) &&
+                empty($request['city']) && empty($request['state'])
             ) {
                 throw new InvalidArgumentException(self::ERROR_FILLED_NONE);
             }
 
-            if (isset($request->username)) {
-                Users::where(self::ID, $request->id)
-                    ->update([self::USERNAME => $request->username]);
+            if (isset($request['username'])) {
+                $this->users->update($id, ['username' => $request['username']]);
             }
 
-            if (isset($request->password)) {
-                Users::where(self::ID, $request->id)
-                    ->update([self::PASSWORD => Hash::make($request->password)]);
+            if (isset($request['password'])) {
+                $this->users->update($id, ['password' => $request['password']]);
             }
 
-            if (isset($request->address)) {
-                Addresses::where(self::FK_USER, $request->id)
-                    ->update([self::ADDRESS => $request->address]);
+
+            if (isset($request['address'])) {
+                $this->addresses->update($id, ['address' => $request['address']]);
             }
 
-            if (isset($request->city)) {
-                Cities::where(self::FK_USER, $request->id)
-                    ->update([self::CITY => $request->city]);
+            if (isset($request['city'])) {
+                $this->cities->update($id, ['city' => $request['city']]);
             }
 
-            if (isset($request->state)) {
-                States::where(self::FK_USER, $request->id)
-                    ->update([self::STATE => $request->state]);
+            if (isset($request['state'])) {
+                $this->states->update($id, ['state' => $request['state']]);
             }
         } catch (Exception $e) {
-            return true;
+            header('HTTP/1.1 500 Invalid Data');
+            return json_encode($e->getMessage());
         }
 
-        return response()->json(self::SUCCESS_UPDATE);
+        return json_encode(self::SUCCESS_UPDATE);
     }
 
     /**
      *  Deletes an user by the given id
      */
-    public function delete()
+    public function delete($id)
     {
         try {
-            if (empty($request->id) || empty(Users::where(self::ID, $request->id)->delete())) {
+            if (empty($this->users->delete($id))) {
                 throw new InvalidArgumentException(self::ERROR_NOT_FOUND_ID);
             }
         } catch (Exception $e) {
-            return true;
+            header('HTTP/1.1 500 Invalid Input');
+            return json_encode($e->getMessage());
         }
 
-        return response()->json(self::SUCCESS_DELETE);
+        return json_encode(self::SUCCESS_DELETE);
     }
 }

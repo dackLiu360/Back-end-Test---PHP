@@ -25,56 +25,109 @@ $statesController = new StatesController($dbConnection);
 
 switch($uri[2]){
     case 'createUser':
-        $userController->create();
+        echo $userController->create();
         break; 
 
-    case 'findUser':
-        $userController->read($id);
+    case 'findUserById':
+        if(empty($uri[3])){
+            header("HTTP/1.1 404 Not Found");
+            echo json_encode('Not Found method!');
+            break;
+        }
+
+        echo $userController->read($uri[3]);
         break; 
 
     case 'findAllUsers':
-        $userController->readAll();
+        echo $userController->readAll();
         break; 
 
     case 'updateUser':
-        $userController->update($params, $id);
+        if(empty($uri[3])){
+            header("HTTP/1.1 404 Not Found");
+            echo json_encode('Not Found method!');
+            break;
+        }
+
+        echo $userController->update($uri[3]);
         break; 
 
     case 'deleteUser':
-        $userController->delete();
+        if(empty($uri[3])){
+            header("HTTP/1.1 404 Not Found");
+            echo json_encode('Not Found method!');
+            break;
+        }
+
+        echo $userController->delete($uri[3]);
         break; 
 
     case 'findAllAdresses':
-        $addressControler->read($id);
+        echo $addressControler->readAll();
         break; 
 
-    case 'findAdressById':
-        $addressControler->readAll();
+    case 'findAddressById':
+        if(empty($uri[3])){
+            header("HTTP/1.1 404 Not Found");
+            echo json_encode('Not Found method!');
+            break;
+        }
+
+        echo $addressControler->read($uri[3]);
         break; 
 
     case 'findAllCities':
-        $citiesController->read($id);
+        echo $citiesController->readAll();
         break; 
 
     case 'findCityById':
-        $citiesController->readAll();
+        if(empty($uri[3])){
+            header("HTTP/1.1 404 Not Found");
+            echo json_encode('Not Found method!');
+            break;
+        }
+
+        echo $citiesController->read($uri[3]);
         break; 
 
     case 'findAllStates':
-        $statesController->read($id);
+        echo $statesController->readAll();
         break; 
 
     case 'findStateById':
-        $statesController->readAll();
+        if(empty($uri[3])){
+            header("HTTP/1.1 404 Not Found");
+            echo json_encode('Not Found method!');
+            break;
+        }
+
+        echo $statesController->read($uri[3]);
         break; 
 
     case 'findUsersTotalByCity':
-        $citiesController->readUsersTotalByCity($name);
+        if(empty($uri[3])){
+            header("HTTP/1.1 404 Not Found");
+            echo json_encode('Not Found method!');
+            break;
+        }
+
+        echo $citiesController->readUsersTotalByCity($uri[3]);
         break; 
 
     case 'findUsersTotalByState':
-        $statesController->readUsersTotalByState($name);
-        break; 
+        if(empty($uri[3])){
+            header("HTTP/1.1 404 Not Found");
+            echo json_encode('Not Found method!');
+            break;
+        }
+
+        echo $statesController->readUsersTotalByState($uri[3]);
+        break;
+        
+    default:
+        header("HTTP/1.1 404 Not Found");
+        echo json_encode('Not Found method!');
+        break;
 }
 
 

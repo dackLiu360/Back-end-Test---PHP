@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use Exception;
 use InvalidArgumentException;
+use App\Models\Addresses;
 
 class AddressesController {
 
@@ -11,21 +12,34 @@ class AddressesController {
     const ERROR_NOT_FOUND_ID = 'No address was found by the given id!';
     const ERROR_NOT_FOUND = 'No address was found!';
 
+    private $addresses;
+
+
+    public function __construct($db)
+    {
+        $this->addresses = new Addresses($db);
+    }
+
+
     /**
      * Get the adress by the given id
      */
     public function read($id)
     {
         try {
-            if(empty($data = Addresses::select(self::ADDRESS)->where(self::ID, $request->id)->first())){
+            if (!$address = $this->addresses->findById($id)) {
                 throw new InvalidArgumentException(self::ERROR_NOT_FOUND_ID);
             }
+            
+            $data['address'] = $address['address'];
         } catch (Exception $e) {
-            return response()->json($e->getMessage(), 500);
+            header('HTTP/1.1 500 Invalid Data');
+            return json_encode($e->getMessage());
         }
 
-        return response()->json($data);
+        return json_encode($data);
     }
+
 
     /**
      * Get all the adresses registered
@@ -33,14 +47,15 @@ class AddressesController {
     public function readAll()
     {
         try {
-            if(empty($data = response()->json(Addresses::select(self::ADDRESS)->distinct()->get()))){
+            if (empty($data = $this->addresses->findAll())) {
                 throw new InvalidArgumentException(self::ERROR_NOT_FOUND);
             }
         } catch (Exception $e) {
-            return response()->json($e->getMessage(), 500);
+            header('HTTP/1.1 500 Invalid Data');
+            return json_encode($e->getMessage());
         }
 
-        return $data;
+        return json_encode($data);
     }
    
 }
