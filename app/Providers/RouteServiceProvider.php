@@ -63,7 +63,7 @@ class RouteServiceProvider
                 return $this->usersController->delete($param);
                 break;
 
-            case 'findAllAdresses':
+            case 'findAllAddresses':
                 return $this->addressesController->readAll();
                 break;
 
