@@ -1,6 +1,6 @@
 <?php
 
-include("config/database.php"); 
+require 'config.php';
 
 $statement = <<<EOS
 
@@ -61,7 +61,7 @@ $statement = <<<EOS
 EOS;
 
 try {
-    $createTable = (new Database())->getConnection()->exec($statement);
+    $createTable = $dbConnection->exec($statement);
     echo "Success!\n";
 } catch (\PDOException $e) {
     exit($e->getMessage());

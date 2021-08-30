@@ -6,7 +6,6 @@ Avaliação para vaga de desenvolvedor back-end para a empresa Mentes Notáveis 
 - PHP 8.0.10
 - Composer 2.1.6
 - Mysql 8.0.26
-- Apache 2 ou Nginx (rodar o servidor)
 
 ## Tutorial 
 
@@ -25,6 +24,6 @@ FLUSH PRIVILEGES;
 
 4. Criar o arquivo ```.env``` na raiz do projeto e copiar o conteúdo do ```.env.example``` nele 
 
-5. Executar o projeto com as configurações feitas no apache ou nginx
+5. Rodar ```php -f database/seeders/DatabaseSeeder.php``` 
 
-6. Rodar ```php -f database/seeders/DatabaseSeeder.php``` 
+6. Executar o projeto com o comando ```php -S 127.0.0.1:8000 -t public```
