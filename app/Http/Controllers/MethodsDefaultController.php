@@ -41,7 +41,6 @@ class MethodsDefaultController
     private $cities;
     private $states;
 
-
     public function __construct($db)
     {
         $this->users = new Users($db);
@@ -49,7 +48,6 @@ class MethodsDefaultController
         $this->cities = new Cities($db);
         $this->states = new States($db);
     }
-
 
     //Users methods
     protected function insertUser($username, $password, $address, $city, $state)
