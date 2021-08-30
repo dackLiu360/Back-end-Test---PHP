@@ -10,7 +10,6 @@ use Exception;
 
 class MethodsDefaultController 
 {
-
     const ID = 'id';
     const ADDRESS = 'address';
     const USERNAME = 'username';

@@ -1,6 +1,7 @@
-<?php 
+<?php
 
 require 'vendor/autoload.php';
+
 use Dotenv\Dotenv;
 
 include("config/database.php");
