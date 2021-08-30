@@ -65,6 +65,7 @@ class CitiesController {
     {
         try {
             $name = urldecode($name);
+            $name = str_replace('%', ' ', $name);
             $data = $this->cities->findByName($name);
         } catch (Exception $e) {
             header('HTTP/1.1 500 Invalid Data');
